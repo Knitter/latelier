@@ -32,7 +32,12 @@ export default {
     autoSearch: {
       type: Boolean,
       default: false
-    }
+    },
+    // Search only in those ids
+    projectsIds: {
+      type: Array,
+      default: null
+    },
   },
   data() {
     return {
@@ -66,13 +71,19 @@ export default {
     find() {
       if (this.autoSearch === false && (!this.filter || !this.filter.length === 0)) return;
       this.loading = true;
+      const params = {
+        name: this.filter,
+        organizationId: this.organizationId,
+        page: this.page
+      };
+
+      if (Array.isArray(this.projectsIds) && this.projectsIds.length > 0) {
+        params.projectsIds = this.projectsIds;
+      }
+
       Meteor.call(
         "search.findProjects",
-        {
-          name: this.filter,
-          organizationId: this.organizationId,
-          page: this.page
-        },
+        params,
         (error, result) => {
           this.loading = false;
           if (error) {

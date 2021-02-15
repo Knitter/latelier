@@ -2,7 +2,7 @@
   <v-menu
     v-model="isMenuShown"
     :nudge-bottom="10"
-    :max-width="400"
+    :min-width="400"
     :close-on-content-click="false"
     offset-y
     @click-outside="isMenuShown = false"
@@ -26,19 +26,40 @@
       </v-card-text>
       <v-divider />
       <v-tabs
-        v-model="selecteTab"
-        grow
+        v-model="selectedTab"
         light
+        grow
         background-color="white"
         class="tabs"
       >
         <v-tabs-slider color="accent" />
-        <v-tab>
-          {{ $t("Projects") }} ({{ projectCount }})
+        <v-tab v-if="favoriteProjects.length">
+          <v-icon small class="mr-2">
+            mdi-star
+          </v-icon>
+          {{ $t("Favorites") }} ({{favoritesProjectCount}})
         </v-tab>
         <v-tab>
-          {{ $t("Organizations") }} ({{ organizationCount }})
+          <v-icon small class="mr-2">
+            mdi-clipboard-pulse-outline
+          </v-icon>
+          {{ $t("Projects") }} ({{projectCount}})
         </v-tab>
+        <v-tab>
+          <v-icon small class="mr-2">
+            mdi-domain
+          </v-icon>
+          {{ $t("Orgs") }} ({{organizationCount}})
+        </v-tab>
+        <v-tab-item v-if="favoriteProjects.length" eager :transition="false" :reverse-transition="false">
+          <search-projects
+            :filter="filter"
+            :project-count.sync="favoritesProjectCount"
+            :projects-ids="favoriteProjects"
+            auto-search
+            @select="switchProject"
+          />
+        </v-tab-item>
         <v-tab-item eager :transition="false" :reverse-transition="false">
           <search-projects
             :filter="filter"
@@ -73,19 +94,26 @@ export default {
       filter: "",
       organizationCount: 0,
       projectCount: 0,
+      favoritesProjectCount: 0,
       isMenuShown: false
     };
   },
   computed: {
+    ...mapState(["currentUser"]),
     ...mapState("project", ["currentProjectId"]),
     ...mapState("organization", ["currentOrganization"]),
-    selecteTab: {
+    selectedTab: {
       get() {
         return this.$route?.meta?.isOrganization ? 1 : this.tab;
       },
       set(newTab) {
         this.tab = newTab;
       }
+    },
+    favoriteProjects() {
+      const favorites = this?.currentUser?.profile?.favoriteProjects;
+      if (!Array.isArray(favorites) || !favorites.length) return [];
+      return favorites;
     }
   },
   methods: {

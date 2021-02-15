@@ -147,9 +147,16 @@ methods.findProjects = new ValidatedMethod({
   validate: new SimpleSchema({
     organizationId: { type: String, optional: true },
     name: { type: String },
-    page: { type: Number, optional: true }
+    page: { type: Number, optional: true },
+    projectsIds: {
+      type: Array,
+      optional: true
+    },
+    "projectsIds.$": {
+      type: String
+    }
   }).validator(),
-  run({ organizationId, name, page }) {
+  run({ organizationId, name, page, projectsIds }) {
     checkLoggedIn();
 
     const userId = Meteor.userId();
@@ -169,6 +176,12 @@ methods.findProjects = new ValidatedMethod({
     const projectQuery = {
       deleted: { $ne: true }
     };
+
+    // filter where _id in projectsIds
+    if (Array.isArray(projectsIds) && projectsIds.length > 0) {
+      projectQuery._id = { $in: projectsIds };
+    }
+
     if (organizationId) {
       projectQuery.organizationId = organizationId;
     }
